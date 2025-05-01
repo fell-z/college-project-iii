@@ -1,5 +1,7 @@
 .gitignore
+.clang-format
+
+compile_commands.json
+build.ps1
 
 ./src/System/docs
-./src/System/compile_commands.json
-./src/System/build.ps1
