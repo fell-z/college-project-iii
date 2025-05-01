@@ -10,13 +10,32 @@ class IR : public Sensor
 		const uint8_t _data_pin;
 
 	public:
-		IR(uint8_t data_pin);
+    /**
+     *  Constructor for IR.
+     *  @param data_pin The pin connected to the @a out of the sensor.
+     */
+    IR(uint8_t data_pin) : _data_pin(data_pin) {}
 
-		void begin();
-		uint8_t read();
+    /**
+     *  Initializes the pin to the appropriate mode.
+     */
+    void begin()
+    {
+      pinMode(_data_pin, INPUT);
+    }
+
+    /**
+     *  @returns HIGH or LOW.
+     */
+    uint8_t read()
+    {
+      return digitalRead(_data_pin);
+    }
+
     bool detect_object();
-
-    float ratio();
+    {
+      return read() == HIGH;
+    }
 };
 
 #endif

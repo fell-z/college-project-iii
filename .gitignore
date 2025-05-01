@@ -1,1 +1,5 @@
+.gitignore
+
 ./src/System/docs
+./src/System/compile_commands.json
+./src/System/build.ps1
