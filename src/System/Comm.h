@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <string.h>
 
-static const byte buf_size = 128;
+static const unsigned int buf_size = 256;
 static char send[buf_size];
 static char receive[buf_size];
 static bool new_recv_data = false;
@@ -17,8 +17,8 @@ struct SerialData
   char identifier[16];
   struct
   {
-    char key[8];
-    char value[8];
+    char key[16];
+    char value[24];
   } options[amount_of_opts];
 };
 
@@ -92,7 +92,7 @@ void data_to_send(struct SerialData data)
 void recv_data()
 {
   static bool recv_in_progress = false;
-  static byte ndx = 0;
+  static unsigned int ndx = 0;
 
   char start_marker = '<';
   char end_marker = '>';
@@ -132,13 +132,13 @@ void send_data()
   if (new_send_data == false)
     return;
 
-  size_t n = strlen(send);
+  unsigned int n = strlen(send);
 	char end_marker = ';';
 
 	if (Serial.availableForWrite() >= n + 1)
 	{
 		Serial.print(send);
-		Serial.print(';');
+		Serial.print(end_marker);
     new_send_data = false;
 	}
 }

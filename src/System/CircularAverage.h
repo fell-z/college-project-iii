@@ -11,10 +11,10 @@ template <typename T>
 class CircularAverage
 {
   private:
-    const uint8_t _max_size;
+    const int _max_size;
 
-    uint8_t _index = 0;
-    uint8_t _size = 0; 
+    int _index = 0;
+    int _size = 0; 
     T _sum = (T)0;
     T* _buf;
 
@@ -28,7 +28,7 @@ class CircularAverage
      *  Set and creates the buffer of @a max_size size.
      *  @param max_size The maximum size of the buffer.
      */
-    CircularAverage(uint8_t max_size) : _max_size(max_size)
+    CircularAverage(int max_size) : _max_size(max_size)
     {
       _buf = new T[max_size] { 0 };
     }
@@ -63,35 +63,37 @@ class CircularAverage
      */
     void clear()
     {
-      memset(_buf, 0, _max_size);
+      _index = 0;
+      _size = 0;
+      _sum = (T)0;
+      memset(_buf, 0, sizeof(T) * _max_size);
     }
 
     /**
      *  Quickly calculates the average by using the @a sum hidden member,
      *  thus performing only a division per method call.
-     *  @tparam R The return type, should be a number type.
      *  @returns The calculated average.
      *
      *  @warning May present some precision errors when doing an average of floats.
      */
-    template <typename R>
-    R quick_average()
+    float quick_average()
     {
-      return (R)_sum / _size;
+      if (_size == 0)
+        return 0.0;
+
+      return (float)_sum / _size;
     }
 
     /**
      *  Calculates the average by summing the elements in the buffer
      *  and then dividing by the number of elements.
-     *  @tparam R The return type, should be a number type.
      *  @returns The calculated average.
      */
-    template <typename R>
-    R average()
+    float average()
     {
-      R sum = 0;
+      float sum = 0;
 
-      for (uint8_t i = 0; i < _size; ++i)
+      for (int i = 0; i < _size; ++i)
         sum += _buf[i];
 
       return sum / _size;
@@ -101,7 +103,7 @@ class CircularAverage
     {
       String repr = String("{");
 
-      for (uint8_t i = 0; i < _max_size; ++i)
+      for (int i = 0; i < _max_size; ++i)
         repr += String(" ") + String(_buf[i]);
 
       return repr + String(" }");
