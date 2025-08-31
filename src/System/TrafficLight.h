@@ -20,11 +20,6 @@ class TrafficLight
 		unsigned long _yellow_time;
 		unsigned long _green_time;
 
-		unsigned long _old_red_time;
-		unsigned long _old_yellow_time;
-		unsigned long _old_green_time;
-    bool _still_old_time = false;
-
 		unsigned long _last_update_time = millis();
 		TL_Stage _stage;
 
@@ -72,23 +67,15 @@ class TrafficLight
       switch (stage)
       {
         case RED_STAGE:
-          _old_red_time = _red_time;
           _red_time = time;
           break;
 
         case YELLOW_STAGE:
-          _old_yellow_time = _yellow_time;
           _yellow_time = time;
           break;
 
         case GREEN_STAGE:
-          _old_green_time = _green_time;
           _green_time = time;
-      }
-
-      if (stage == _stage)
-      {
-        _still_old_time = true;
       }
     }
 
@@ -168,31 +155,28 @@ class TrafficLight
     {
       switch (_stage)
       {
-        case RED_STAGE:
-          set_stage(GREEN_STAGE);
+        case GREEN_STAGE:
+          set_stage(YELLOW_STAGE);
           break;
         case YELLOW_STAGE:
           set_stage(RED_STAGE);
           break;
-        case GREEN_STAGE:
-          set_stage(YELLOW_STAGE);
+        case RED_STAGE:
+          set_stage(GREEN_STAGE);
+          break;
       }
     }
 
 		bool tick()
     {
       bool has_changed = true;
-      
-      unsigned long time;
 
       switch (_stage)
       {
         case RED_STAGE:
-          time = (_still_old_time) ? _old_red_time : _red_time;
-
-          if (millis() - _last_update_time >= time)
+          if (millis() - _last_update_time >= _red_time)
           {
-            set_stage(GREEN_STAGE);
+            // set_stage(GREEN_STAGE);
           }
           else
           {
@@ -201,11 +185,9 @@ class TrafficLight
           break;
 
         case YELLOW_STAGE:
-          time = (_still_old_time) ? _old_yellow_time : _yellow_time;
-
-          if (millis() - _last_update_time >= time)
+          if (millis() - _last_update_time >= _yellow_time)
           {
-            set_stage(RED_STAGE);
+            // set_stage(RED_STAGE);
           }
           else
           {
@@ -214,21 +196,14 @@ class TrafficLight
           break;
 
         case GREEN_STAGE:
-          time = (_still_old_time) ? _old_green_time : _green_time;
-
-          if (millis() - _last_update_time >= time)
+          if (millis() - _last_update_time >= _green_time)
           {
-            set_stage(YELLOW_STAGE);
+            // set_stage(YELLOW_STAGE);
           }
           else
           {
             has_changed = false;
           }
-      }
-
-      if (has_changed && _still_old_time)
-      {
-        _still_old_time = false;
       }
 
       return has_changed;

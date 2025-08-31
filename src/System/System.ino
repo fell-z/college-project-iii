@@ -213,6 +213,9 @@ TL_Stage stage;
 float mean;
 bool tlp1_has_changed = false, tlp2_has_changed = false;
 
+unsigned long r1_possible_green_time = 0, r2_possible_green_time = 0, r3_possible_green_time = 0;
+unsigned long longest_possible_green_time = 0;
+
 unsigned long last_mean_time = millis();
 unsigned long last_debug_time = millis();
 
@@ -317,6 +320,44 @@ void loop()
   tlp1_has_changed = tlp1.tick();
   tlp2_has_changed = tlp2.tick();
 
+  if (tlp1_has_changed)
+  {
+    stage = tlp1.get_stage();
+
+    tlp1.next_stage();
+
+    if (stage != GREEN_STAGE)
+    {
+      tlp2.next_stage();
+
+      tlp1_has_changed = tlp2_has_changed = true;
+    }
+  }
+  else if (tlp2_has_changed)
+  {
+    stage = tlp2.get_stage();
+
+    tlp2.next_stage();
+
+    if (stage != GREEN_STAGE)
+    {
+      tlp1.next_stage();
+
+      tlp1_has_changed = tlp2_has_changed = true;
+    }
+  }
+
+  if (tlp1_has_changed == true)
+  {
+    TLP_send_stage(tlp1, "tl1", "tl3");
+  }
+
+  if (tlp2_has_changed == true)
+  {
+    TLP_send_stage(tlp2, "tl2", "tl4");
+  }
+
+  /*
   if (tlp1_has_changed == true && tlp2_has_changed == false)
   {
     stage = tlp1.get_stage();
@@ -362,6 +403,7 @@ void loop()
   {
     TLP_send_stage(tlp2, "tl2", "tl4");
   }
+  */
 
   tlp1_has_changed = tlp2_has_changed = false;
   /*===================================*/
@@ -512,6 +554,8 @@ void loop()
   {
     r3.last_ref_mean_update_time = millis();
 
+    r3_possible_green_time = TLP_possible_time(r3, tlp2, tlp1);
+
     TLP_update_times(r3, tlp2, tlp1);
 
     tfm3.update(tlp2.get_orig_time_ratio());
@@ -522,6 +566,8 @@ void loop()
   {
     r2.last_ref_mean_update_time = millis();
 
+    r2_possible_green_time = TLP_possible_time(r2, tlp1, tlp2);
+
     TLP_update_times(r2, tlp1, tlp2);
   }
 
@@ -529,10 +575,28 @@ void loop()
   {
     r1.last_ref_mean_update_time = millis();
 
+    r1_possible_green_time = TLP_possible_time(r1, tlp1, tlp2);
+
     TLP_update_times(r1, tlp1, tlp2);
 
     tfm1.update(tlp1.get_orig_time_ratio());
     tfm2.update(tlp1.get_orig_time_ratio());
+  }
+
+  longest_possible_green_time = max(r1_possible_green_time, r2_possible_green_time);
+  longest_possible_green_time = max(longest_possible_green_time, r3_possible_green_time);
+
+  if (longest_possible_green_time == r1_possible_green_time)
+  {
+    TLP_update_times(r1, tlp1, tlp2);
+  }
+  else if (longest_possible_green_time == r2_possible_green_time)
+  {
+    TLP_update_times(r2, tlp1, tlp2);
+  }
+  else if (longest_possible_green_time == r3_possible_green_time)
+  {
+    TLP_update_times(r3, tlp2, tlp1);
   }
   /*============================================================*/
 
@@ -802,6 +866,25 @@ void Region_send_mean(Region& r, char identifier[])
 
 
 /*====== Traffic Light Pairs ======*/
+unsigned long TLP_possible_time(Region& r, TrafficLightPair& green_tlp, TrafficLightPair& red_tlp)
+{
+  float m;
+  unsigned long t;
+
+  m = Region_mean(r);
+
+  t = TrafficLightPair::calculate_time_by_flow(green_tlp.get_min_time_for(GREEN_STAGE), m);
+
+  if (red_tlp.is_doable_red_time(t))
+  {
+    return t;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
 void TLP_update_times(Region& r, TrafficLightPair& green_tlp, TrafficLightPair& red_tlp)
 {
   float m;
